@@ -8,7 +8,7 @@ using static UnityEngine.GraphicsBuffer;
 
 namespace Spine.Unity
 {
-    public class PlayerUnit : MonoBehaviour
+    public class EnemyUnit : MonoBehaviour
     {
         [SerializeField] SkeletonAnimation playerAnim;
         [SerializeField] Transform mainTarget;
@@ -40,7 +40,7 @@ namespace Spine.Unity
 
         private void Update()
         {
-            EnemyUnit enemyTarget = FindFirstObjectByType<EnemyUnit>();
+            PlayerUnit enemyTarget = FindFirstObjectByType<PlayerUnit>();
 
             if (enemyTarget != null && enemyTarget != this)
             {
@@ -58,7 +58,7 @@ namespace Spine.Unity
                         int damage = Random.Range(attackEnemyFirst, attackEnemySecond);
                         enemyTarget.DamageHP(damage);
                         damageTimer = damageInterval;
-                        if(enemyTarget.HP < 0)
+                        if (enemyTarget.HP < 0)
                         {
                             Destroy(enemyTarget.gameObject);
                         }
@@ -76,7 +76,7 @@ namespace Spine.Unity
             }
         }
 
-        EnemyUnit FindFirstObjectByType<T>() where T : EnemyUnit
+        PlayerUnit FindFirstObjectByType<T>() where T : PlayerUnit
         {
             T[] targets = FindObjectsOfType<T>();
             foreach (T target in targets)
