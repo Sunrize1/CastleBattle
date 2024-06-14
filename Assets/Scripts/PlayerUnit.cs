@@ -23,10 +23,16 @@ namespace Spine.Unity
 
         NavMeshAgent agent;
         LayerMask targetLayer = 1 << 3;
+        private Player player;
 
         public void DamageHP(int Damage)
         {
             HP -= Damage;
+        }
+
+        public void SetPlayer(Player player)
+        {
+            this.player = player;
         }
 
         private void Start()
@@ -61,6 +67,7 @@ namespace Spine.Unity
                         if(enemyTarget.HP < 0)
                         {
                             Destroy(enemyTarget.gameObject);
+                            player.AddMoney(10);
                         }
                     }
                 }
@@ -91,6 +98,11 @@ namespace Spine.Unity
                 }
             }
             return null;
+        }
+
+        public void SetMainTarget(Transform target)
+        {
+            mainTarget = target;
         }
 
         private void OnDrawGizmos()
