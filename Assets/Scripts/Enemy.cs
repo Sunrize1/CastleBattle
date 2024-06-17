@@ -15,8 +15,6 @@ public class Enemy : MonoBehaviour
 
     private void Start()
     {
-        // Запуск корутины для добавления юнитов каждые 5 секунд
-        Debug.Log("Enemy script started.");
         StartCoroutine(AddUnitEveryFiveSeconds());
     }
 
@@ -29,7 +27,6 @@ public class Enemy : MonoBehaviour
     {
         while (true)
         {
-            Debug.Log("Coroutine running...");
             yield return new WaitForSeconds(5f);
             AddNewUnit();
         }

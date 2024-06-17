@@ -15,7 +15,7 @@ namespace Spine.Unity
         [SerializeField] float viewDistance = 10f;
         Transform unit;
         float eps = 2.0f;
-        public int HP = 100;
+        public int HP = 50;
         public int attackEnemyFirst = 3;
         public int attackEnemySecond = 10;
         private float damageTimer = 0.5f;

@@ -209,6 +209,6 @@ MonoBehaviour:
   playerAnim: {fileID: 8571245989272525841}
   mainTarget: {fileID: 0}
   viewDistance: 4
-  HP: 120
+  HP: 50
   attackEnemyFirst: 3
   attackEnemySecond: 10

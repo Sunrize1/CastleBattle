@@ -12,8 +12,14 @@ public class Player : MonoBehaviour
     public Transform unitTarget;
     public TextMeshProUGUI moneyTextUI;
     public int money = 0;
+    public int unitDamage = 0;
+    public int unitArmor = 0;
+    public int unitSpawnCount = 1;
+    public int level = 1;
+    private int damageUpgrades = 0;
+    private int armorUpgrades = 0;
 
-   private void Start()
+    private void Start()
     {
         // Запуск корутины для добавления юнитов каждые 5 секунд
         StartCoroutine(AddUnitEveryFiveSeconds());
@@ -28,8 +34,11 @@ public class Player : MonoBehaviour
     {
         while (true)
         {
+            for (int i = 0; i < unitSpawnCount; i++)
+            {
+                AddNewUnit();
+            }
             yield return new WaitForSeconds(5f);
-            AddNewUnit();
         }
     }
 
@@ -40,6 +49,9 @@ public class Player : MonoBehaviour
         PlayerUnit newUnit = newUnitObject.GetComponent<PlayerUnit>();
         newUnit.SetMainTarget(unitTarget);
         newUnit.SetPlayer(this);
+        newUnit.attackEnemyFirst += unitDamage;
+        newUnit.attackEnemySecond += unitDamage;
+        newUnit.HP += unitArmor;
         playerUnits.Add(newUnit);
     }
 
@@ -56,5 +68,34 @@ public class Player : MonoBehaviour
     {
         money += amount;
         Debug.Log("Money added. Total money: " + money);
+    }
+
+    public void ApplyUpgrade(UpgradeType type, int value, GameObject newSkin = null)
+    {
+        switch (type)
+        {
+            case UpgradeType.Damage:
+                unitDamage += value;
+                damageUpgrades++;
+                UpdatePlayerLevel();
+                break;
+            case UpgradeType.Armor:
+                unitArmor += (int)value;
+                armorUpgrades++;
+                UpdatePlayerLevel();
+                break;
+            case UpgradeType.SpawnCount:
+                unitSpawnCount += (int)value;
+                break;
+        }
+    }
+
+    private void UpdatePlayerLevel()
+    {
+        int minUpgrades = Mathf.Min(damageUpgrades, armorUpgrades);
+        if (minUpgrades > 0)
+        {
+            level = minUpgrades + 1;
+        }
     }
 }

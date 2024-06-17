@@ -12,10 +12,10 @@ namespace Spine.Unity
     {
         [SerializeField] SkeletonAnimation playerAnim;
         [SerializeField] Transform mainTarget;
-        [SerializeField] float viewDistance = 10f;
+        [SerializeField] float viewDistance = 10f; 
         Transform unit;
         float eps = 2.0f;
-        public int HP = 100;
+        public int HP = 50;
         public int attackEnemyFirst = 3;
         public int attackEnemySecond = 10;
         private float damageTimer = 0.5f;
@@ -33,6 +33,7 @@ namespace Spine.Unity
         public void SetPlayer(Player player)
         {
             this.player = player;
+            UpdateSkin();
         }
 
         private void Start()
@@ -41,6 +42,7 @@ namespace Spine.Unity
             agent = GetComponent<NavMeshAgent>();
             agent.updateRotation = false;
             agent.updateUpAxis = false;
+            UpdateSkin();
         }
 
 
@@ -109,6 +111,18 @@ namespace Spine.Unity
         {
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, viewDistance);
+        }
+
+        public void UpdateSkin()
+        {
+            if (playerAnim != null)
+            {
+                string skinName = "p" + player.level.ToString();
+                playerAnim.initialSkinName = skinName;
+                playerAnim.skeleton.SetSkin(skinName);
+                playerAnim.skeleton.SetSlotsToSetupPose();
+                playerAnim.AnimationState.Apply(playerAnim.skeleton); // Apply the new skin
+            }
         }
 
     }
