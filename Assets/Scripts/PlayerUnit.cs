@@ -74,12 +74,25 @@ namespace Spine.Unity
                 else
                 {
                     playerAnim.AnimationName = "Move";
+    Vector3 direction = agent.velocity.normalized;
+    		if (direction != Vector3.zero)
+    		{
+        		float angle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+        		playerAnim.Skeleton.ScaleX = Mathf.Sign(direction.x); // Поворот модели спрайта в зависимости от направления движения
+    		}
                 }
             }
             else
             {
                 agent.SetDestination(mainTarget.position);
                 playerAnim.AnimationName = "Move";
+    			Vector3 direction = agent.velocity.normalized;
+    			if (direction != Vector3.zero)
+    			{
+        			float angle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+        			playerAnim.Skeleton.ScaleX = Mathf.Sign(direction.x); // Поворот модели спрайта в зависимости от направления движения
+    			}
+
             }
         }
 

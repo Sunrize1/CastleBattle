@@ -8,7 +8,7 @@ public class UpgradeManager : MonoBehaviour
 
     private void Start()
     {
-        // Инициализация улучшений с 0 уровнем
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ 0 пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         upgrades = new List<Upgrade>
         {
             new Upgrade { type = UpgradeType.Damage, value = 5, baseCost = 20 },
