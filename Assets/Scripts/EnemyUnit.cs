@@ -28,6 +28,9 @@ namespace Spine.Unity
         public void DamageHP(int Damage)
         {
             HP -= Damage;
+            DamageUI.Instance.AddText(Damage, transform.position); 
+
+           
         }
 
         public void SetEnemy(Enemy enemy)
@@ -64,6 +67,7 @@ namespace Spine.Unity
                         int damage = Random.Range(attackEnemyFirst, attackEnemySecond);
                         enemyTarget.DamageHP(damage);
                         damageTimer = damageInterval;
+                        DamageUI.Instance.AddText(damage, enemyTarget.transform.position);
                         if (enemyTarget.HP < 0)
                         {
                             Destroy(enemyTarget.gameObject);

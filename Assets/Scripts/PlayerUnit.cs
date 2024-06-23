@@ -2,9 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.UI;
-using static UnityEngine.GraphicsBuffer;
-
 
 namespace Spine.Unity
 {
@@ -12,7 +9,7 @@ namespace Spine.Unity
     {
         [SerializeField] SkeletonAnimation playerAnim;
         [SerializeField] Transform mainTarget;
-        [SerializeField] float viewDistance = 10f; 
+        [SerializeField] float viewDistance = 10f;
         Transform unit;
         float eps = 2.0f;
         public int HP = 50;
@@ -22,12 +19,13 @@ namespace Spine.Unity
         private float damageInterval = 1.0f;
 
         NavMeshAgent agent;
-        LayerMask targetLayer = 1 << 3;
         private Player player;
 
         public void DamageHP(int Damage)
         {
             HP -= Damage;
+            DamageUI.Instance.AddText(Damage, transform.position);
+
         }
 
         public void SetPlayer(Player player)
@@ -44,7 +42,6 @@ namespace Spine.Unity
             agent.updateUpAxis = false;
             UpdateSkin();
         }
-
 
         private void Update()
         {
@@ -66,7 +63,8 @@ namespace Spine.Unity
                         int damage = Random.Range(attackEnemyFirst, attackEnemySecond);
                         enemyTarget.DamageHP(damage);
                         damageTimer = damageInterval;
-                        if(enemyTarget.HP < 0)
+                        DamageUI.Instance.AddText(damage, enemyTarget.transform.position);
+                        if (enemyTarget.HP <= 0)
                         {
                             Destroy(enemyTarget.gameObject);
                             player.AddMoney(10);
