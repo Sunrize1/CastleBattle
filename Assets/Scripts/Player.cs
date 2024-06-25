@@ -5,6 +5,12 @@ using UnityEngine;
 using Mirror;
 using Spine.Unity;
 
+public struct PlayerSetupMessage : NetworkMessage
+{
+    public uint unitNetId;
+    public uint playerNetId;
+}
+
 public class Player : NetworkBehaviour
 {
     public List<PlayerUnit> playerUnits = new List<PlayerUnit>();
@@ -12,7 +18,7 @@ public class Player : NetworkBehaviour
     public Transform unitTarget;
     public TextMeshProUGUI moneyTextUI;
 
-    public int money = 0;
+    [SyncVar] public int money = 0;
     [SyncVar] public int unitDamage = 0;
     [SyncVar] public int unitArmor = 0;
     [SyncVar] public int unitSpawnCount = 1;
@@ -20,7 +26,7 @@ public class Player : NetworkBehaviour
 
     private int damageUpgrades = 0;
     private int armorUpgrades = 0;
-
+    [Command]
     private void Start()
     {
         if (isLocalPlayer)
@@ -30,7 +36,7 @@ public class Player : NetworkBehaviour
             CmdStartSpawningUnits();
         }
     }
-
+    [Command]
     private void Update()
     {
         if (isLocalPlayer) {
@@ -58,21 +64,15 @@ public class Player : NetworkBehaviour
     {
         Vector3 spawnPosition = GetSpawnPosition();
         GameObject newUnitObject = Instantiate(playerUnitPrefab, spawnPosition, Quaternion.identity);
-        PlayerUnit newUnit = newUnitObject.GetComponent<PlayerUnit>();
-        newUnit.SetPlayer(this);
         NetworkServer.Spawn(newUnitObject);
-        RpcSetupUnit(newUnitObject);
-    }
 
-    [ClientRpc]
-    public void RpcSetupUnit(GameObject newUnitObject)
-    {
-        PlayerUnit newUnit = newUnitObject.GetComponent<PlayerUnit>();
-        newUnit.SetMainTarget(unitTarget);
-        newUnit.attackEnemyFirst += unitDamage;
-        newUnit.attackEnemySecond += unitDamage;
-        newUnit.HP += unitArmor;
-        playerUnits.Add(newUnit);
+        // Отправляем сообщение на клиент
+        PlayerSetupMessage msg = new PlayerSetupMessage
+        {
+            unitNetId = newUnitObject.GetComponent<NetworkIdentity>().netId,
+            playerNetId = this.netId
+        };
+        NetworkServer.SendToAll(msg); // Отправка сообщения всем клиентам
     }
 
     Vector3 GetSpawnPosition()
@@ -82,13 +82,13 @@ public class Player : NetworkBehaviour
         randomDirection.y = 0;
         return transform.position + randomDirection;
     }
-
+    [Command]
     public void AddMoney(int amount)
     {
         money += amount;
     }
 
-    [Command]
+    [Server]
     public void CmdApplyUpgrade(UpgradeType type, int value)
     {
         switch (type)
@@ -118,5 +118,7 @@ public class Player : NetworkBehaviour
         }
     }
 }
+
+
 
 

@@ -1225,6 +1225,7 @@ GameObject:
   - component: {fileID: 699214975}
   - component: {fileID: 699214974}
   - component: {fileID: 699214973}
+  - component: {fileID: 699214976}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -1340,6 +1341,18 @@ MonoBehaviour:
   evaluationInterval: 3
   timeInterpolationGui: 0
   enemyPrefab: {fileID: 7800013178644113849, guid: 0f2deec43b6b70c40a6a875e7b33a9bb, type: 3}
+--- !u!114 &699214976
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 699214968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7044e60a78dfa6f4ba2a669f786d517b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &703465433
 PrefabInstance:
   m_ObjectHideFlags: 0

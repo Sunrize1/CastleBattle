@@ -41,12 +41,13 @@ namespace Spine.Unity
                 }
             }
         }
+        [Server]
         public void SetPlayer(Player player)
         {
             this.player = player;
             UpdateSkin();
         }
-
+        [Server]
         private void Start()
         {
             unit = GetComponent<Transform>();
@@ -56,14 +57,11 @@ namespace Spine.Unity
             UpdateSkin();
         }
 
-        
+        [Server]
         private void Update()
         {
-
-
-            if (currentTarget == null || currentTarget.HP <= 0)
-            {
-                if (currentTarget.HP <= 0) { player.AddMoney(20); }
+            if (currentTarget == null || (currentTarget != null && currentTarget.HP <= 0))
+            {                
                 currentTarget = FindFirstObjectByType<EnemyUnit>();
             }
 
@@ -81,8 +79,10 @@ namespace Spine.Unity
                     if (damageTimer <= 0)
                     {
                         int damage = Random.Range(attackEnemyFirst, attackEnemySecond);
+                        if (currentTarget.HP - damage <= 0) { player.AddMoney(20); }
                         currentTarget.DamageHP(damage);
                         damageTimer = damageInterval;
+                        
                     }
                 }
                 else
@@ -97,14 +97,14 @@ namespace Spine.Unity
             }
         }
 
-        
+
 
         [ClientRpc]
         void RpcPlayAnimation(string animationName)
         {
             playerAnim.AnimationName = animationName;
         }
-
+        [Server]
         EnemyUnit FindFirstObjectByType<T>() where T : EnemyUnit
         {
             T[] targets = FindObjectsOfType<T>();

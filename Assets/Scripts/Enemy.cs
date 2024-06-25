@@ -23,9 +23,12 @@ public class Enemy : NetworkBehaviour
     [Server]
     private void Start()
     {
-        moneyTextUI = GameObject.FindFirstObjectByType<TextMeshProUGUI>();
-        unitTarget = GameObject.FindGameObjectWithTag("Pbase").transform;
-        StartSpawningUnits();
+        if (!isLocalPlayer)
+        {
+            moneyTextUI = GameObject.FindFirstObjectByType<TextMeshProUGUI>();
+            unitTarget = GameObject.FindGameObjectWithTag("Pbase").transform;
+            StartSpawningUnits();
+        }
     }
     [Server]
     private void Update()
@@ -63,7 +66,7 @@ public class Enemy : NetworkBehaviour
         RpcSetupUnit(newUnitObject);
     }
 
-    [ClientRpc]
+    [Server]
     public void RpcSetupUnit(GameObject newUnitObject)
     {
         EnemyUnit newUnit = newUnitObject.GetComponent<EnemyUnit>();
