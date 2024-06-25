@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
+using Mirror;
 using static UnityEngine.GraphicsBuffer;
 
 
 namespace Spine.Unity
 {
-    public class EnemyUnit : MonoBehaviour
+    public class EnemyUnit : NetworkBehaviour
     {
-        [SerializeField] SkeletonAnimation playerAnim;
+        [SerializeField] SkeletonAnimation enemyAnim;
         [SerializeField] Transform mainTarget;
         [SerializeField] float viewDistance = 10f;
         Transform unit;
@@ -23,66 +24,82 @@ namespace Spine.Unity
 
         NavMeshAgent agent;
         LayerMask targetLayer = 1 << 3;
-        private Enemy enemy;
+        [SyncVar] private Enemy enemy;
+        [SyncVar] private PlayerUnit currentTarget;
 
+        [ClientRpc]
         public void DamageHP(int Damage)
         {
             HP -= Damage;
+            if (HP <= 0)
+            {
+                // Ensure destruction logic is handled on the server
+                if (isServer)
+                {
+                    NetworkServer.Destroy(this.gameObject);
+                    enemy.enemyUnits.Remove(this);
+                }
+            }
         }
-
+        [Server]
         public void SetEnemy(Enemy enemy)
         {
             this.enemy = enemy;
+            UpdateSkin();
         }
 
+        
+        [Server]
         private void Start()
         {
             unit = GetComponent<Transform>();
             agent = GetComponent<NavMeshAgent>();
             agent.updateRotation = false;
             agent.updateUpAxis = false;
+            UpdateSkin();
         }
 
-
+        [Server]
         private void Update()
         {
-            PlayerUnit enemyTarget = FindFirstObjectByType<PlayerUnit>();
-
-            if (enemyTarget != null && enemyTarget != this)
+            if (currentTarget == null || currentTarget.HP <= 0 || Vector3.Distance(transform.position, currentTarget.transform.position) > viewDistance)
             {
-                Transform visibleTarget = enemyTarget.transform;
+                currentTarget = FindFirstObjectByType<PlayerUnit>();
+            }
+
+            if (currentTarget != null)
+            {
+                Transform visibleTarget = currentTarget.transform;
                 agent.SetDestination(visibleTarget.position);
                 float deltaX = Mathf.Abs(unit.position.x - visibleTarget.position.x);
                 float deltaY = Mathf.Abs(unit.position.y - visibleTarget.position.y);
                 if (deltaX < eps && deltaY < eps)
                 {
-                    playerAnim.AnimationName = "Attack";
+                    RpcPlayAnimation("Attack");
                     // Apply damage over time
                     damageTimer -= Time.deltaTime;
                     if (damageTimer <= 0)
                     {
                         int damage = Random.Range(attackEnemyFirst, attackEnemySecond);
-                        enemyTarget.DamageHP(damage);
+                        currentTarget.DamageHP(damage);
                         damageTimer = damageInterval;
-                        if (enemyTarget.HP < 0)
-                        {
-                            Destroy(enemyTarget.gameObject);
-                            enemy.AddMoney(10);
-                        }
                     }
                 }
                 else
                 {
-                    playerAnim.AnimationName = "Move";
+                    RpcPlayAnimation("Move");
                 }
             }
             else
             {
                 agent.SetDestination(mainTarget.position);
-                playerAnim.AnimationName = "Move";
+                RpcPlayAnimation("Move");
             }
         }
 
+
+
+        [Server]
         PlayerUnit FindFirstObjectByType<T>() where T : PlayerUnit
         {
             T[] targets = FindObjectsOfType<T>();
@@ -100,6 +117,12 @@ namespace Spine.Unity
             return null;
         }
 
+        [ClientRpc]
+        void RpcPlayAnimation(string animationName)
+        {
+            enemyAnim.AnimationName = animationName;
+        }
+        [Server]
         public void SetMainTarget(Transform target)
         {
             mainTarget = target;
@@ -109,6 +132,18 @@ namespace Spine.Unity
         {
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, viewDistance);
+        }
+        [Server]
+        public void UpdateSkin()
+        {
+            if (enemyAnim != null)
+            {
+                string skinName = "e" + enemy.level.ToString();
+                enemyAnim.initialSkinName = skinName;
+                enemyAnim.skeleton.SetSkin(skinName);
+                enemyAnim.skeleton.SetSlotsToSetupPose();
+                enemyAnim.AnimationState.Apply(enemyAnim.skeleton); // Apply the new skin
+            }
         }
 
     }

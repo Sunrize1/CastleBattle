@@ -1,3 +1,4 @@
+using Mirror;
 using UnityEngine;
 
 public enum UpgradeType
@@ -20,7 +21,7 @@ public class Upgrade
     {
         return baseCost * (level + 1);
     }
-
+ 
     public void ApplyUpgrade(Player player)
     {
         if (level < maxLevel)
@@ -29,13 +30,13 @@ public class Upgrade
             switch (type)
             {
                 case UpgradeType.Damage:
-                    player.ApplyUpgrade(type, value);
+                    player.CmdApplyUpgrade(type, value);
                     break;
                 case UpgradeType.Armor:
-                    player.ApplyUpgrade(type, value);
+                    player.CmdApplyUpgrade(type, value);
                     break;
                 case UpgradeType.SpawnCount:
-                    player.ApplyUpgrade(type, value);
+                    player.CmdApplyUpgrade(type, value);
                     break;
             }
         }

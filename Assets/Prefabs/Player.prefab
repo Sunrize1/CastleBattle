@@ -14,7 +14,9 @@ GameObject:
   - component: {fileID: 8571245989272525841}
   - component: {fileID: 5670820054670420761}
   - component: {fileID: 3467925224029777311}
-  - component: {fileID: 6153373382864656299}
+  - component: {fileID: -8038415533386841604}
+  - component: {fileID: -3275112360926145235}
+  - component: {fileID: 8960623492990828675}
   m_Layer: 3
   m_Name: Player
   m_TagString: Untagged
@@ -194,7 +196,7 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1.1675757, y: 1.3037047}
   m_EdgeRadius: 0
---- !u!114 &6153373382864656299
+--- !u!114 &-8038415533386841604
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -206,9 +208,63 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf6dbabc71a0b5441906601686d4af77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   playerAnim: {fileID: 8571245989272525841}
   mainTarget: {fileID: 0}
   viewDistance: 4
   HP: 50
   attackEnemyFirst: 3
   attackEnemySecond: 10
+--- !u!114 &-3275112360926145235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1030954486494850976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneId: 0
+  _assetId: 3342303902
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
+--- !u!114 &8960623492990828675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1030954486494850976}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ff3ba0becae47b8b9381191598957c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 1
+  syncMode: 0
+  syncInterval: 0
+  target: {fileID: 6784347952402846502}
+  syncPosition: 1
+  syncRotation: 1
+  syncScale: 0
+  onlySyncOnChange: 1
+  compressRotation: 1
+  interpolatePosition: 1
+  interpolateRotation: 1
+  interpolateScale: 1
+  coordinateSpace: 0
+  sendIntervalMultiplier: 1
+  timelineOffset: 0
+  showGizmos: 0
+  showOverlay: 0
+  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
+  onlySyncOnChangeCorrectionMultiplier: 2
+  rotationSensitivity: 0.01
+  positionPrecision: 0.01
+  scalePrecision: 0.01

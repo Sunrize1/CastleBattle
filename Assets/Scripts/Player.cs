@@ -1,54 +1,74 @@
-using Spine.Unity;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using Mirror;
+using Spine.Unity;
 
-
-public class Player : MonoBehaviour
+public class Player : NetworkBehaviour
 {
     public List<PlayerUnit> playerUnits = new List<PlayerUnit>();
     public GameObject playerUnitPrefab;
     public Transform unitTarget;
     public TextMeshProUGUI moneyTextUI;
+
     public int money = 0;
-    public int unitDamage = 0;
-    public int unitArmor = 0;
-    public int unitSpawnCount = 1;
-    public int level = 1;
+    [SyncVar] public int unitDamage = 0;
+    [SyncVar] public int unitArmor = 0;
+    [SyncVar] public int unitSpawnCount = 1;
+    [SyncVar] public int level = 1;
+
     private int damageUpgrades = 0;
     private int armorUpgrades = 0;
 
     private void Start()
     {
-        // Запуск корутины для добавления юнитов каждые 5 секунд
-        StartCoroutine(AddUnitEveryFiveSeconds());
+        if (isLocalPlayer)
+        {
+            moneyTextUI = GameObject.FindFirstObjectByType<TextMeshProUGUI>();
+            unitTarget = GameObject.FindGameObjectWithTag("Ebase").transform;
+            CmdStartSpawningUnits();
+        }
     }
 
     private void Update()
     {
-        moneyTextUI.text = money.ToString();  
+        if (isLocalPlayer) {
+            moneyTextUI.text = money.ToString();
+        }
     }
 
-    IEnumerator AddUnitEveryFiveSeconds()
+    [Command]
+    public void CmdStartSpawningUnits()
+    {
+        StartCoroutine(SpawnUnits());
+    }
+
+    private IEnumerator SpawnUnits()
     {
         while (true)
         {
-            for (int i = 0; i < unitSpawnCount; i++)
-            {
-                AddNewUnit();
-            }
+            CmdSpawnUnitOnServer();
             yield return new WaitForSeconds(5f);
         }
     }
 
-    void AddNewUnit()
+    [Command]
+    public void CmdSpawnUnitOnServer()
     {
-        // Создание нового юнита и добавление его в массив и сцену
-        GameObject newUnitObject = Instantiate(playerUnitPrefab, GetSpawnPosition(), Quaternion.identity);
+        Vector3 spawnPosition = GetSpawnPosition();
+        GameObject newUnitObject = Instantiate(playerUnitPrefab, spawnPosition, Quaternion.identity);
+        PlayerUnit newUnit = newUnitObject.GetComponent<PlayerUnit>();
+        newUnit.SetPlayer(this);
+        NetworkServer.Spawn(newUnitObject);
+        RpcSetupUnit(newUnitObject);
+    }
+
+    [ClientRpc]
+    public void RpcSetupUnit(GameObject newUnitObject)
+    {
         PlayerUnit newUnit = newUnitObject.GetComponent<PlayerUnit>();
         newUnit.SetMainTarget(unitTarget);
-        newUnit.SetPlayer(this);
         newUnit.attackEnemyFirst += unitDamage;
         newUnit.attackEnemySecond += unitDamage;
         newUnit.HP += unitArmor;
@@ -57,40 +77,39 @@ public class Player : MonoBehaviour
 
     Vector3 GetSpawnPosition()
     {
-        // Возвращает позицию рядом с объектом Player
-        float spawnRadius = 2f; // Радиус спавна вокруг объекта Player
+        float spawnRadius = 2f;
         Vector3 randomDirection = Random.insideUnitSphere * spawnRadius;
-        randomDirection.y = 0; // Оставляем на той же высоте
+        randomDirection.y = 0;
         return transform.position + randomDirection;
     }
 
     public void AddMoney(int amount)
     {
         money += amount;
-        Debug.Log("Money added. Total money: " + money);
     }
 
-    public void ApplyUpgrade(UpgradeType type, int value, GameObject newSkin = null)
+    [Command]
+    public void CmdApplyUpgrade(UpgradeType type, int value)
     {
         switch (type)
         {
             case UpgradeType.Damage:
                 unitDamage += value;
                 damageUpgrades++;
-                UpdatePlayerLevel();
                 break;
             case UpgradeType.Armor:
-                unitArmor += (int)value;
+                unitArmor += value;
                 armorUpgrades++;
-                UpdatePlayerLevel();
                 break;
             case UpgradeType.SpawnCount:
-                unitSpawnCount += (int)value;
+                unitSpawnCount += value;
                 break;
         }
+
+        UpdatePlayerLevel();
     }
 
-    private void UpdatePlayerLevel()
+    void UpdatePlayerLevel()
     {
         int minUpgrades = Mathf.Min(damageUpgrades, armorUpgrades);
         if (minUpgrades > 0)
@@ -99,3 +118,5 @@ public class Player : MonoBehaviour
         }
     }
 }
+
+

@@ -1,59 +1,120 @@
-using Spine.Unity;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using Mirror;
+using Spine.Unity;
 
-
-public class Enemy : MonoBehaviour
+public class Enemy : NetworkBehaviour
 {
     public List<EnemyUnit> enemyUnits = new List<EnemyUnit>();
     public GameObject playerUnitPrefab;
     public Transform unitTarget;
     public TextMeshProUGUI moneyTextUI;
-    public int money = 0;
 
+    [SyncVar] public int money = 0;
+    [SyncVar] public int unitDamage = 0;
+    [SyncVar] public int unitArmor = 0;
+    [SyncVar] public int unitSpawnCount = 1;
+    [SyncVar] public int level = 1;
+
+    private int damageUpgrades = 0;
+    private int armorUpgrades = 0;
+    [Server]
     private void Start()
     {
-        StartCoroutine(AddUnitEveryFiveSeconds());
+        moneyTextUI = GameObject.FindFirstObjectByType<TextMeshProUGUI>();
+        unitTarget = GameObject.FindGameObjectWithTag("Pbase").transform;
+        StartSpawningUnits();
     }
-
+    [Server]
     private void Update()
     {
-        moneyTextUI.text = money.ToString();
-    }
-
-    IEnumerator AddUnitEveryFiveSeconds()
-    {
-        while (true)
+        if (moneyTextUI != null)
         {
-            yield return new WaitForSeconds(5f);
-            AddNewUnit();
+            moneyTextUI.text = money.ToString();
         }
     }
 
-    void AddNewUnit()
+    [Server]
+    public void StartSpawningUnits()
     {
-        // Создание нового юнита и добавление его в массив и сцену
-        GameObject newUnitObject = Instantiate(playerUnitPrefab, GetSpawnPosition(), Quaternion.identity);
+        StartCoroutine(SpawnUnits());
+    }
+
+    [Server]
+    private IEnumerator SpawnUnits()
+    {
+        while (true)
+        {
+            CmdSpawnUnitOnServer();
+            yield return new WaitForSeconds(5f);
+        }
+    }
+
+    [Server]
+    public void CmdSpawnUnitOnServer()
+    {
+        Vector3 spawnPosition = GetSpawnPosition();
+        GameObject newUnitObject = Instantiate(playerUnitPrefab, spawnPosition, Quaternion.identity);
+        EnemyUnit newUnit = newUnitObject.GetComponent<EnemyUnit>();
+        newUnit.SetEnemy(this);
+        NetworkServer.Spawn(newUnitObject);
+        RpcSetupUnit(newUnitObject);
+    }
+
+    [ClientRpc]
+    public void RpcSetupUnit(GameObject newUnitObject)
+    {
         EnemyUnit newUnit = newUnitObject.GetComponent<EnemyUnit>();
         newUnit.SetMainTarget(unitTarget);
-        newUnit.SetEnemy(this);
+        newUnit.attackEnemyFirst += unitDamage;
+        newUnit.attackEnemySecond += unitDamage;
+        newUnit.HP += unitArmor;
         enemyUnits.Add(newUnit);
     }
 
     Vector3 GetSpawnPosition()
     {
-        // Возвращает позицию рядом с объектом Player
-        float spawnRadius = 2f; // Радиус спавна вокруг объекта Player
+        float spawnRadius = 2f;
         Vector3 randomDirection = Random.insideUnitSphere * spawnRadius;
-        randomDirection.y = 0; // Оставляем на той же высоте
+        randomDirection.y = 0;
         return transform.position + randomDirection;
     }
 
+    [Server]
     public void AddMoney(int amount)
     {
         money += amount;
-        Debug.Log("Money added. Total money: " + money);
+    }
+
+    [Command]
+    public void CmdApplyUpgrade(UpgradeType type, int value)
+    {
+        switch (type)
+        {
+            case UpgradeType.Damage:
+                unitDamage += value;
+                damageUpgrades++;
+                break;
+            case UpgradeType.Armor:
+                unitArmor += value;
+                armorUpgrades++;
+                break;
+            case UpgradeType.SpawnCount:
+                unitSpawnCount += value;
+                break;
+        }
+
+        UpdatePlayerLevel();
+    }
+
+    void UpdatePlayerLevel()
+    {
+        int minUpgrades = Mathf.Min(damageUpgrades, armorUpgrades);
+        if (minUpgrades > 0)
+        {
+            level = minUpgrades + 1;
+        }
     }
 }

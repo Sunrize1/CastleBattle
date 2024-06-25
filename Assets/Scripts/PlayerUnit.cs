@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
+using Mirror;
 using static UnityEngine.GraphicsBuffer;
 
 
 namespace Spine.Unity
 {
-    public class PlayerUnit : MonoBehaviour
+    public class PlayerUnit : NetworkBehaviour
     {
         [SerializeField] SkeletonAnimation playerAnim;
         [SerializeField] Transform mainTarget;
@@ -23,13 +24,23 @@ namespace Spine.Unity
 
         NavMeshAgent agent;
         LayerMask targetLayer = 1 << 3;
-        private Player player;
+        [SyncVar] private Player player;
+        [SyncVar] private EnemyUnit currentTarget;
 
+        [ClientRpc]
         public void DamageHP(int Damage)
         {
             HP -= Damage;
+            if (HP <= 0)
+            {
+                // Ensure destruction logic is handled on the server
+                if (isServer)
+                {
+                    NetworkServer.Destroy(this.gameObject);
+                    player.playerUnits.Remove(this);
+                }
+            }
         }
-
         public void SetPlayer(Player player)
         {
             this.player = player;
@@ -45,44 +56,53 @@ namespace Spine.Unity
             UpdateSkin();
         }
 
-
+        
         private void Update()
         {
-            EnemyUnit enemyTarget = FindFirstObjectByType<EnemyUnit>();
 
-            if (enemyTarget != null && enemyTarget != this)
+
+            if (currentTarget == null || currentTarget.HP <= 0)
             {
-                Transform visibleTarget = enemyTarget.transform;
+                if (currentTarget.HP <= 0) { player.AddMoney(20); }
+                currentTarget = FindFirstObjectByType<EnemyUnit>();
+            }
+
+            if (currentTarget != null)
+            {
+                Transform visibleTarget = currentTarget.transform;
                 agent.SetDestination(visibleTarget.position);
                 float deltaX = Mathf.Abs(unit.position.x - visibleTarget.position.x);
                 float deltaY = Mathf.Abs(unit.position.y - visibleTarget.position.y);
                 if (deltaX < eps && deltaY < eps)
                 {
-                    playerAnim.AnimationName = "Attack";
+                    RpcPlayAnimation("Attack");
                     // Apply damage over time
                     damageTimer -= Time.deltaTime;
                     if (damageTimer <= 0)
                     {
                         int damage = Random.Range(attackEnemyFirst, attackEnemySecond);
-                        enemyTarget.DamageHP(damage);
+                        currentTarget.DamageHP(damage);
                         damageTimer = damageInterval;
-                        if(enemyTarget.HP < 0)
-                        {
-                            Destroy(enemyTarget.gameObject);
-                            player.AddMoney(10);
-                        }
                     }
                 }
                 else
                 {
-                    playerAnim.AnimationName = "Move";
+                    RpcPlayAnimation("Move");
                 }
             }
             else
             {
                 agent.SetDestination(mainTarget.position);
-                playerAnim.AnimationName = "Move";
+                RpcPlayAnimation("Move");
             }
+        }
+
+        
+
+        [ClientRpc]
+        void RpcPlayAnimation(string animationName)
+        {
+            playerAnim.AnimationName = animationName;
         }
 
         EnemyUnit FindFirstObjectByType<T>() where T : EnemyUnit
@@ -112,7 +132,7 @@ namespace Spine.Unity
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, viewDistance);
         }
-
+        
         public void UpdateSkin()
         {
             if (playerAnim != null)
