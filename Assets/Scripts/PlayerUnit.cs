@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
-using Mirror;
 using static UnityEngine.GraphicsBuffer;
 
 
 namespace Spine.Unity
 {
-    public class PlayerUnit : NetworkBehaviour
+    public class PlayerUnit : MonoBehaviour
     {
         [SerializeField] SkeletonAnimation playerAnim;
         [SerializeField] Transform mainTarget;
@@ -24,30 +23,26 @@ namespace Spine.Unity
 
         NavMeshAgent agent;
         LayerMask targetLayer = 1 << 3;
-        [SyncVar] private Player player;
-        [SyncVar] private EnemyUnit currentTarget;
+        private Player player;
+        private EnemyUnit currentTarget;
 
-        [ClientRpc]
+       
         public void DamageHP(int Damage)
         {
             HP -= Damage;
             if (HP <= 0)
             {
-                // Ensure destruction logic is handled on the server
-                if (isServer)
-                {
-                    NetworkServer.Destroy(this.gameObject);
-                    player.playerUnits.Remove(this);
-                }
+                Destroy(this.gameObject);
+                player.playerUnits.Remove(this);
             }
         }
-        [Server]
+        
         public void SetPlayer(Player player)
         {
             this.player = player;
             UpdateSkin();
         }
-        [Server]
+        
         private void Start()
         {
             unit = GetComponent<Transform>();
@@ -57,7 +52,7 @@ namespace Spine.Unity
             UpdateSkin();
         }
 
-        [Server]
+        
         private void Update()
         {
             if (currentTarget == null || (currentTarget != null && currentTarget.HP <= 0))
@@ -99,12 +94,12 @@ namespace Spine.Unity
 
 
 
-        [ClientRpc]
+        
         void RpcPlayAnimation(string animationName)
         {
             playerAnim.AnimationName = animationName;
         }
-        [Server]
+        
         EnemyUnit FindFirstObjectByType<T>() where T : EnemyUnit
         {
             T[] targets = FindObjectsOfType<T>();

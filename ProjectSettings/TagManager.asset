@@ -6,7 +6,8 @@ TagManager:
   tags:
   - Ebase
   - Pbase
-  - MoneyUI
+  - MoneyUiP
+  - MoneyUiE
   layers:
   - Default
   - TransparentFX
